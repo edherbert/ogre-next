@@ -46,7 +46,7 @@ if( APPLE )
             set(APP_CONTENTS_PATH ${CMAKE_CURRENT_BINARY_DIR}/../../../../bin/${SAMPLE_NAME}.app/Contents)
         #endif ()
     endif ()
-	
+
 	if( NOT OGRE_BUILD_PLATFORM_APPLE_IOS )
 		set(FRAMEWORKS
 			Ogre
@@ -57,17 +57,24 @@ if( APPLE )
 	        OgreOverlay
 			Plugin_ParticleFX
 	    )
-		
+
+		if( CMAKE_GENERATOR STREQUAL "Xcode" )
+			set(BASE_PATH ${CMAKE_CURRENT_BINARY_DIR}/../../../../lib/macosx/$(CONFIGURATION)/)
+		else()
+			set(BASE_PATH ${CMAKE_CURRENT_BINARY_DIR}/../../../../lib/macosx/)
+		endif()
 	    foreach(FWK ${FRAMEWORKS})
 			add_custom_command(TARGET ${SAMPLE_NAME} POST_BUILD
-				COMMAND ditto ${CMAKE_CURRENT_BINARY_DIR}/../../../../lib/macosx/${FWK}.framework ${APP_CONTENTS_PATH}/Frameworks/${FWK}.framework
+				#COMMAND ditto ${BASE_PATH}/${FWK}.framework ${APP_CONTENTS_PATH}/Frameworks/${FWK}.framework
+				#Only copy the frameworks if they actually exist (-d checks for a directory as frameworks are just directories).
+				COMMAND [ -d ${BASE_PATH}/${FWK}.framework ] && ditto ${BASE_PATH}/${FWK}.framework ${APP_CONTENTS_PATH}/Frameworks/${FWK}.framework || exit 0
 			)
 	    endforeach(FWK)
-		
+
 		add_custom_command(TARGET ${SAMPLE_NAME} POST_BUILD
 			COMMAND mkdir -p ${APP_CONTENTS_PATH}/Resources
 		)
-		
+
 		foreach(RSC ${SAMPLE_COMMON_RESOURCES})
 			add_custom_command(TARGET ${SAMPLE_NAME} POST_BUILD
 				COMMAND cp -r ${RSC} ${APP_CONTENTS_PATH}/Resources/
